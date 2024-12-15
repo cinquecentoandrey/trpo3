@@ -1,6 +1,7 @@
 package com.cinquecento.weathermodel.service;
 
 import com.cinquecento.weathermodel.config.properties.RoomSettingProperties;
+import com.cinquecento.weathermodel.model.Room;
 import com.cinquecento.weathermodel.model.state.RoomState;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,14 +13,22 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class RoomEventGenerator {
 
+    private final Room room;
     private final RoomSettingProperties roomSettingProperties;
 
     public Flux<RoomState> generateRoomEvents() {
         return Flux.interval(Duration.ofSeconds(roomSettingProperties.getEventInterval()))
-                .map(i -> new RoomState(
-                        15 + Math.random() * 15,
-                        30 + Math.random() * 50
-                ));
+                .map(i -> {
+                    double deltaTemperature = (Math.random() * 5) * (Math.random() < 0.5 ? -1 : 1);
+                    double deltaHumidity = (Math.random() * 5) * (Math.random() < 0.5 ? -1 : 1);
+
+                    double newTemperature = room.getTemperature() + deltaTemperature;
+                    double newHumidity = room.getHumidity() + deltaHumidity;
+
+                    room.setTemperature(newTemperature);
+                    room.setHumidity(newHumidity);
+                    return new RoomState(newTemperature, newHumidity);
+                });
     }
 
 }

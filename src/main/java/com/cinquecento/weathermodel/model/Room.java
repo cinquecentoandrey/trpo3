@@ -1,8 +1,10 @@
 package com.cinquecento.weathermodel.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class Room {
 
     private double temperature;

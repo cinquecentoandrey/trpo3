@@ -19,17 +19,9 @@ public class RoomStateEventProcessor {
 
     public void processRoomEvent(RoomState state) {
 
-        if (state.getTemperature() > roomSettingProperties.getTemperatureThreshold()) {
-            deviceControlSignal.setAirConditionerOn(true);
-        } else {
-            deviceControlSignal.setAirConditionerOn(false);
-        }
+        deviceControlSignal.setAirConditionerOn(state.getTemperature() > roomSettingProperties.getTemperatureThreshold());
 
-        if (state.getHumidity() < roomSettingProperties.getHumidityThreshold()) {
-            deviceControlSignal.setHumidifierOn(true);
-        } else {
-            deviceControlSignal.setHumidifierOn(false);
-        }
+        deviceControlSignal.setHumidifierOn(state.getHumidity() < roomSettingProperties.getHumidityThreshold());
 
         room.setTemperature(state.getTemperature());
         room.setHumidity(state.getHumidity());

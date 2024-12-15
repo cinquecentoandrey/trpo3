@@ -13,4 +13,6 @@ app:
     event-interval: 5
     humidity-threshold: 40
     temperature-threshold: 25
+    initial-temp: 20
+    initial-humidity: 25
 
