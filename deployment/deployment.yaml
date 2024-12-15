@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: room-app
+  labels:
+    app: room-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: room-app
+  template:
+    metadata:
+      labels:
+        app: room-app
+    spec:
+      containers:
+        - name: room-app
+          image: room-app:1.3
+          ports:
+            - containerPort: 8080

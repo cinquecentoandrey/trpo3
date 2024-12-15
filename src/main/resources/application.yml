@@ -1,0 +1,16 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  shutdown: graceful
+
+spring:
+  application:
+    name: weather-model
+
+app:
+  room-settings:
+    event-interval: 5
+    humidity-threshold: 40
+    temperature-threshold: 25
+
