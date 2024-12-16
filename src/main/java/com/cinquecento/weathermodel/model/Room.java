@@ -9,7 +9,7 @@ public class Room {
 
     private double temperature;
     private double humidity;
-    private boolean airConditionerOn;
-    private boolean humidifierOn;
+    private PowerLevel airConditionerPower;
+    private PowerLevel humidifierPower;
 
 }

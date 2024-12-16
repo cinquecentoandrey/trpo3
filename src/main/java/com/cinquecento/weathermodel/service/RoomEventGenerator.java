@@ -19,16 +19,15 @@ public class RoomEventGenerator {
     public Flux<RoomState> generateRoomEvents() {
         return Flux.interval(Duration.ofSeconds(roomSettingProperties.getEventInterval()))
                 .map(i -> {
-                    double deltaTemperature = (Math.random() * 5) * (Math.random() < 0.5 ? -1 : 1);
-                    double deltaHumidity = (Math.random() * 5) * (Math.random() < 0.5 ? -1 : 1);
+                    double newTemperature = calculateNextValue(room.getTemperature());
+                    double newHumidity = calculateNextValue(room.getHumidity());
 
-                    double newTemperature = room.getTemperature() + deltaTemperature;
-                    double newHumidity = room.getHumidity() + deltaHumidity;
-
-                    room.setTemperature(newTemperature);
-                    room.setHumidity(newHumidity);
                     return new RoomState(newTemperature, newHumidity);
                 });
+    }
+
+    private double calculateNextValue(double currentValue) {
+        return currentValue + (Math.random() * 2 * (double) 2 - (double) 2);
     }
 
 }
