@@ -9,15 +9,36 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service responsible for processing room state events.
+ * Adjusts the power levels of the air conditioner and humidifier based on the new temperature and humidity.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RoomStateEventProcessor {
 
+    /**
+     * The control signal object that represents the current power levels of the air conditioner and humidifier.
+     */
     private final DeviceControlSignal deviceControlSignal = new DeviceControlSignal();
+
+    /**
+     * The room object that holds the current temperature, humidity, and device power levels.
+     */
     private final Room room;
+
+    /**
+     * Configuration properties for device thresholds, such as temperature and humidity limits.
+     */
     private final RoomSettingProperties roomSettingProperties;
 
+    /**
+     * Processes a new room state event and updates the room's devices accordingly.
+     * Adjusts the power levels of the air conditioner and humidifier based on the current state.
+     *
+     * @param state the new room state, including temperature and humidity.
+     */
     public void processRoomEvent(RoomState state) {
         double previousTemperature = room.getTemperature();
         double previousHumidity = room.getHumidity();
@@ -52,6 +73,15 @@ public class RoomStateEventProcessor {
                 humidifierLevel != PowerLevel.OFF ? "Включен" : "Выключен", humidifierLevel);
     }
 
+    /**
+     * Determines the power level for the air conditioner based on the current and previous temperatures.
+     *
+     * @param currentTemperature the current temperature.
+     * @param previousTemperature the previous temperature.
+     * @param previousPower the previous power level of the air conditioner.
+     * @param threshold the temperature threshold for turning on the air conditioner.
+     * @return the new power level for the air conditioner.
+     */
     private PowerLevel determineAirConditionerPower(double currentTemperature,
                                                     double previousTemperature,
                                                     PowerLevel previousPower,
@@ -69,6 +99,15 @@ public class RoomStateEventProcessor {
         return previousPower;
     }
 
+    /**
+     * Determines the power level for the humidifier based on the current and previous humidity.
+     *
+     * @param currentHumidity the current humidity level.
+     * @param previousHumidity the previous humidity level.
+     * @param previousPower the previous power level of the humidifier.
+     * @param threshold the humidity threshold for turning on the humidifier.
+     * @return the new power level for the humidifier.
+     */
     private PowerLevel determineHumidifierPower(double currentHumidity,
                                                 double previousHumidity,
                                                 PowerLevel previousPower,

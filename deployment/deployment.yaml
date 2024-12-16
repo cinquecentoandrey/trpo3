@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: room-app
-          image: room-app:1.3
+          image: room-app:1.4
           ports:
             - containerPort: 8080
