@@ -5,6 +5,7 @@ import com.cinquecento.weathermodel.model.PowerLevel;
 import com.cinquecento.weathermodel.model.Room;
 import com.cinquecento.weathermodel.model.signal.DeviceControlSignal;
 import com.cinquecento.weathermodel.model.state.RoomState;
+import com.cinquecento.weathermodel.util.MembershipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,30 +35,17 @@ public class RoomStateEventProcessor {
     private final RoomSettingProperties roomSettingProperties;
 
     /**
-     * Processes a new room state event and updates the room's devices accordingly.
-     * Adjusts the power levels of the air conditioner and humidifier based on the current state.
+     * Processes the current room state, updating temperature, humidity,
+     * and device power levels based on fuzzy logic thresholds.
      *
-     * @param state the new room state, including temperature and humidity.
+     * @param state the current state of the room, including temperature and humidity
      */
     public void processRoomEvent(RoomState state) {
-        double previousTemperature = room.getTemperature();
-        double previousHumidity = room.getHumidity();
-        PowerLevel previousAirConditionerPower = room.getAirConditionerPower();
-        PowerLevel previousHumidifierPower = room.getHumidifierPower();
+        double thresholdTemperature = roomSettingProperties.getTemperatureThreshold();
+        double thresholdHumidity = roomSettingProperties.getHumidityThreshold();
 
-        PowerLevel airConditionerLevel = determineAirConditionerPower(
-                state.getTemperature(),
-                previousTemperature,
-                previousAirConditionerPower,
-                roomSettingProperties.getTemperatureThreshold()
-        );
-
-        PowerLevel humidifierLevel = determineHumidifierPower(
-                state.getHumidity(),
-                previousHumidity,
-                previousHumidifierPower,
-                roomSettingProperties.getHumidityThreshold()
-        );
+        PowerLevel airConditionerLevel = determineAirConditionerPower(state.getTemperature(), thresholdTemperature);
+        PowerLevel humidifierLevel = determineHumidifierPower(state.getHumidity(), thresholdHumidity);
 
         deviceControlSignal.setAirConditionerPower(airConditionerLevel);
         deviceControlSignal.setHumidifierPower(humidifierLevel);
@@ -74,55 +62,51 @@ public class RoomStateEventProcessor {
     }
 
     /**
-     * Determines the power level for the air conditioner based on the current and previous temperatures.
+     * Determines the power level for the air conditioner based on fuzzy membership functions
+     * for low, medium, and high temperature ranges.
      *
-     * @param currentTemperature the current temperature.
-     * @param previousTemperature the previous temperature.
-     * @param previousPower the previous power level of the air conditioner.
-     * @param threshold the temperature threshold for turning on the air conditioner.
-     * @return the new power level for the air conditioner.
+     * @param currentTemperature the current room temperature
+     * @param threshold the threshold temperature for device activation
+     * @return the calculated {@link PowerLevel} for the air conditioner
      */
-    private PowerLevel determineAirConditionerPower(double currentTemperature,
-                                                    double previousTemperature,
-                                                    PowerLevel previousPower,
-                                                    double threshold) {
-        if (currentTemperature <= threshold) {
+    private PowerLevel determineAirConditionerPower(double currentTemperature, double threshold) {
+        double low = MembershipUtils.calculateLowMembership(currentTemperature, 0, threshold - 5);
+        double medium = MembershipUtils.calculateMediumMembership(currentTemperature, threshold - 5, threshold + 5);
+        double high = MembershipUtils.calculateHighMembership(currentTemperature, threshold, threshold + 10);
+
+        if (high > medium && high > low) {
+            return PowerLevel.HIGH;
+        } else if (medium > low) {
+            return PowerLevel.MEDIUM;
+        } else if (low > 0) {
+            return PowerLevel.LOW;
+        } else {
             return PowerLevel.OFF;
         }
-
-        if (currentTemperature > previousTemperature) {
-            return PowerLevel.increasePower(previousPower);
-        } else if (currentTemperature < previousTemperature) {
-            return PowerLevel.decreasePower(previousPower);
-        }
-
-        return previousPower;
     }
 
     /**
-     * Determines the power level for the humidifier based on the current and previous humidity.
+     * Determines the power level for the humidifier based on fuzzy membership functions
+     * for low, medium, and high humidity ranges.
      *
-     * @param currentHumidity the current humidity level.
-     * @param previousHumidity the previous humidity level.
-     * @param previousPower the previous power level of the humidifier.
-     * @param threshold the humidity threshold for turning on the humidifier.
-     * @return the new power level for the humidifier.
+     * @param currentHumidity the current room humidity
+     * @param threshold the threshold humidity for device activation
+     * @return the calculated {@link PowerLevel} for the humidifier
      */
-    private PowerLevel determineHumidifierPower(double currentHumidity,
-                                                double previousHumidity,
-                                                PowerLevel previousPower,
-                                                double threshold) {
-        if (currentHumidity >= threshold) {
+    private PowerLevel determineHumidifierPower(double currentHumidity, double threshold) {
+        double low = MembershipUtils.calculateLowMembership(currentHumidity, 0, threshold - 10);
+        double medium = MembershipUtils.calculateMediumMembership(currentHumidity, threshold - 10, threshold + 10);
+        double high = MembershipUtils.calculateHighMembership(currentHumidity, threshold, threshold + 20);
+
+        if (low > medium && low > high) {
+            return PowerLevel.HIGH;
+        } else if (medium > high) {
+            return PowerLevel.MEDIUM;
+        } else if (high > 0) {
+            return PowerLevel.LOW;
+        } else {
             return PowerLevel.OFF;
         }
-
-        if (currentHumidity < previousHumidity) {
-            return PowerLevel.increasePower(previousPower);
-        } else if (currentHumidity > previousHumidity) {
-            return PowerLevel.decreasePower(previousPower);
-        }
-
-        return previousPower;
     }
 
 }
